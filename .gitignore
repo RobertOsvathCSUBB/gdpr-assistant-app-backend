@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 
 credentials.json
+cert.pem
+key.pem
