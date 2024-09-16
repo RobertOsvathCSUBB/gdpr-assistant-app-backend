@@ -1,4 +1,4 @@
-import google_auth_oauthlib.flow 
+import google_auth_oauthlib.flow
 import google.oauth2.credentials
 import flask
 from log.logger import logger
@@ -15,18 +15,32 @@ def authenticate_google():
         scopes=SCOPES
     )
 
-    flow.redirect_uri = 'http://localhost:5000/'
+    flow.redirect_uri = 'https://localhost:5000/test-auth-callback'
+    # flow.redirect_uri = 'https://localhost:5000/'
 
     authorization_url, state = flow.authorization_url(
         access_type='offline',
         include_granted_scopes='true',
     )
 
-    #TODO - Fix this
+    flask.session['state'] = state
+    logger.info(f'State before redirect: {state}')
+    return flask.redirect(authorization_url)
+
+def auth_callback():
+    state = flask.session['state']
+    logger.info(f'State after redirect: {state}')
+
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        'credentials.json', 
+        scopes=SCOPES,
+        state=state
+    )
+    flow.redirect_uri = flask.url_for('test_auth_callback', _external=True)
 
     authorization_response = flask.request.url
     code = flask.request.args.get('code')
-    # logger.info(f'Authorization response: {authorization_response}')
+    logger.info(f'Authorization response: {authorization_response}')
     logger.info(f'Code: {code}')
     flow.fetch_token(authorization_response=authorization_response)
 
